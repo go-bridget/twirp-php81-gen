@@ -1,6 +1,10 @@
 package php81
 
-type File string {
+import (
+	"bytes"
+)
+
+type File struct {
 	// Name (full path) for the generated file
 	name string
 
@@ -16,22 +20,22 @@ type File string {
 
 func NewFile(name, namespace string) *File {
 	return &File{
-		name: name,
+		name:      name,
 		namespace: namespace,
 	}
 }
 
-func (f *File) Name() {
+func (f *File) Name() string {
 	return f.name
 }
 
 func (f *File) Bytes() []byte {
 	f.print("<?php")
 	f.print()
-	f.print("namespace " + namespace + ";");
+	f.print("namespace " + f.namespace + ";")
 	f.print()
 	for _, use := range f.uses {
-		f.print("use " + use + ";");
+		f.print("use " + use + ";")
 	}
 
 	return f.contents.Bytes()
@@ -47,7 +51,6 @@ func (f *File) print(lines ...string) {
 		return
 	}
 	for _, line := range lines {
-		f.contents.WriteString(line+"\n")
+		f.contents.WriteString(line + "\n")
 	}
 }
-

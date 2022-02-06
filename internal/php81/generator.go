@@ -1,8 +1,10 @@
 package php81
 
 import (
-	"github.com/emicklei/proto"
+	"path"
+
 	"github.com/apex/log"
+	"github.com/emicklei/proto"
 )
 
 type generator struct {
@@ -16,7 +18,7 @@ type generator struct {
 func NewGenerator(options *Options) *generator {
 	return &generator{
 		options: options,
-		files: []*File{}
+		files:   []*File{},
 	}
 }
 
@@ -27,7 +29,6 @@ func (g *generator) Handlers() []proto.Handler {
 		proto.WithImport(g.Import),
 	}
 }
-
 
 func (g *generator) Import(i *proto.Import) {
 	log.Infof("importing %s", i.Filename)
@@ -45,8 +46,11 @@ func (g *generator) Import(i *proto.Import) {
 	proto.Walk(definition, handlers...)
 }
 
+// RPC marks if a service is defined in the .proto file.
+// The service part is mandatory, in order to generate
+// relevant rpc request and response structures.
 func (g *generator) RPC(rpc *proto.RPC) {
-	parent, ok := rpc.Parent.(*proto.Service)
+	_, ok := rpc.Parent.(*proto.Service)
 	if !ok {
 		panic("parent is not proto.service")
 	}
@@ -54,6 +58,8 @@ func (g *generator) RPC(rpc *proto.RPC) {
 }
 
 func (g *generator) Message(msg *proto.Message) {
-	file := NewFile(msg.Name + ".php", g.options.namespace)
+	filename := path.Join(g.options.Folder, msg.Name+".php")
+	file := NewFile(filename, g.options.Namespace)
 	g.files = append(g.files, file)
+	// TODO: add fields to the message generator
 }

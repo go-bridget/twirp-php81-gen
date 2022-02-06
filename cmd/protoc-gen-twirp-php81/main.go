@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 
 	"github.com/apex/log"
@@ -21,17 +20,15 @@ func main() {
 	var (
 		flags flag.FlagSet
 
-		namespace   = flags.String("namespace", "Twirp")
-		packageName = flags.String("package", "")
-		folder      = flags.String("folder", "")
+		namespace = flags.String("namespace", "Twirp", "PHP namespace for generated messages")
+		folder    = flags.String("folder", "", "Output folder for generated .php files")
 	)
 	opts := protogen.Options{
 		ParamFunc: flags.Set,
 	}
 	opts.Run(func(gen *protogen.Plugin) error {
-		options = &php81.Options{
+		options := &php81.Options{
 			Namespace: *namespace,
-			Package:   *packageName,
 			Folder:    *folder,
 		}
 
@@ -44,15 +41,13 @@ func main() {
 				continue
 			}
 
-			// @todo, *php81.Options
-			files, err := php81.Load(in, nil)
+			files, err := php81.Load(in, options)
 			if err != nil {
 				return err
 			}
 
 			for _, file := range files {
-				// todo: output folder?
-				g := gen.NewGeneratedFile(file.Name())
+				g := gen.NewGeneratedFile(file.Name(), f.GoImportPath)
 				if _, err := g.Write(file.Bytes()); err != nil {
 					return err
 				}
