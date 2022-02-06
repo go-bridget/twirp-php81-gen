@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package upload;
+
+option go_package = "github.com/go-bridget/twirp-php81-gen/example/upload";
+
+import "google/api/annotations.proto";
+
+service UploadService {
+	rpc FileGet(FileGetRequest) returns (FileGetResponse) {
+		option (google.api.http) = {
+			get: "/upload/v1/file/{fileID}"
+		};
+	}
+}
+
+message FileGetRequest {
+	string sessionID = 1;
+	int64 fileID = 2;
+}
+message FileGetResponse {
+	string url = 1;
+}

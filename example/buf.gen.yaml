@@ -1,5 +1,5 @@
 version: v1
 plugins:
   - name: twirp-php81
-    opt: namespace=Twirp,folder=example/buf2,hostname=api.example.com,path_prefix=/api/v1
-    out: example/buf
+    opt: namespace=Twirp
+    out: example/gen
