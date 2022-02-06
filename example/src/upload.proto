@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package upload;
 
-option go_package = "github.com/go-bridget/twirp-php81-gen/example/upload";
+option go_package = "./upload";
 
 import "google/api/annotations.proto";
 

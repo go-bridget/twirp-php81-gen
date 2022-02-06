@@ -7,7 +7,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"google.golang.org/protobuf/compiler/protogen"
 
-	"github.com/go-bridget/twirp-gen/internal/php81"
+	"github.com/go-bridget/twirp-php81-gen/internal/php81"
 )
 
 var _ = spew.Dump

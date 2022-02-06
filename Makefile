@@ -9,12 +9,12 @@ build:
 	go build -o build/ ./cmd/...
 
 test:
-	# use go run so we do not have install buf command
-	# go get -u github.com/bufbuild/buf/cmd/...@v1.0.0-rc10
 	GOBIN=/usr/local/bin go install github.com/bufbuild/buf/cmd/...@v1.0.0-rc12
 	buf --version
 	cd example && buf mod update
 	buf generate --template example/buf.gen.yaml --path example
+	buf generate --template example/buf.gen.yaml --path example/src/upload.proto
+	buf generate --template example/buf.gen.yaml --path example/src/google_timestamp.proto
 
 clean:
 	go fmt ./...
