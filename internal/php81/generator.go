@@ -78,8 +78,8 @@ func (g *generator) Message(msg *proto.Message) {
 
 	addField := func(field *proto.Field, repeated bool) {
 		file.AddField(Field{
-			Name: field.Name,
-			Type: field.Type,
+			Name:     field.Name,
+			Type:     field.Type,
 			Repeated: repeated,
 		})
 	}

@@ -1,14 +1,14 @@
 package php81
 
 import (
+	"bytes"
 	"path"
 	"strings"
-	"bytes"
 )
 
 type Field struct {
-	Type string
-	Name string
+	Type     string
+	Name     string
 	Repeated bool
 }
 
@@ -46,35 +46,35 @@ func (f *File) Name() string {
 
 func (f *File) typeAlias(t string, repeated bool) string {
 	if repeated {
-		return "array";
+		return "array"
 	}
 	if t == "string" || t == "float" {
-		return t;
+		return t
 	}
 	if strings.Contains(t, "int64") {
-		return "string";
+		return "string"
 	}
 	if strings.Contains(t, "int") {
-		return "int";
+		return "int"
 	}
 	if strings.Contains(t, "double") {
-		return "float";
+		return "float"
 	}
 	if strings.Contains(t, "bool") {
-		return "bool";
+		return "bool"
 	}
-	return "mixed";
+	return "mixed"
 }
 
 func (f *File) typeLiteral(t string, repeated bool) string {
 	if repeated {
-		return " // []" + t;
+		return " // []" + t
 	}
 	alias := f.typeAlias(t, repeated)
 	if alias != t {
-		return " // " + t;
+		return " // " + t
 	}
-	return "";
+	return ""
 }
 
 func (f *File) Bytes() []byte {
