@@ -6,13 +6,7 @@ import (
 	"strings"
 )
 
-type Field struct {
-	Type     string
-	Name     string
-	Repeated bool
-}
-
-type File struct {
+type Message struct {
 	// Name (full path) for the generated file
 	name string
 
@@ -29,22 +23,22 @@ type File struct {
 	contents bytes.Buffer
 }
 
-func NewFile(name, namespace string) *File {
-	return &File{
+func NewMessage(name, namespace string) *Message {
+	return &Message{
 		name:      name,
 		namespace: namespace,
 	}
 }
 
-func (f *File) AddField(n Field) {
+func (f *Message) addField(n Field) {
 	f.fields = append(f.fields, n)
 }
 
-func (f *File) Name() string {
+func (f *Message) Name() string {
 	return f.name
 }
 
-func (f *File) typeAlias(t string, repeated bool) string {
+func (f *Message) typeAlias(t string, repeated bool) string {
 	if repeated {
 		return "array"
 	}
@@ -66,7 +60,7 @@ func (f *File) typeAlias(t string, repeated bool) string {
 	return "mixed"
 }
 
-func (f *File) typeLiteral(t string, repeated bool) string {
+func (f *Message) typeLiteral(t string, repeated bool) string {
 	if repeated {
 		return " // []" + t
 	}
@@ -77,7 +71,7 @@ func (f *File) typeLiteral(t string, repeated bool) string {
 	return ""
 }
 
-func (f *File) Bytes() []byte {
+func (f *Message) Bytes() []byte {
 	f.print("<?php")
 	f.print()
 	f.print("namespace " + f.namespace + ";")
@@ -101,11 +95,11 @@ func (f *File) Bytes() []byte {
 	return f.contents.Bytes()
 }
 
-func (f *File) use(name string) {
+func (f *Message) use(name string) {
 	f.uses = append(f.uses, name)
 }
 
-func (f *File) print(lines ...string) {
+func (f *Message) print(lines ...string) {
 	if len(lines) == 0 {
 		f.contents.WriteString("\n")
 		return

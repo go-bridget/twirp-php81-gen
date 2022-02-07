@@ -5,7 +5,7 @@ import (
 )
 
 // Load takes a .proto file, and generates multiple output File{} objects
-func Load(filename string, options *Options) ([]*File, error) {
+func Load(filename string, options *Options) ([]FileGenerator, error) {
 	definition, err := loadProto(filename)
 	if err != nil {
 		return nil, err

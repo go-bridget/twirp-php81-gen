@@ -6,18 +6,85 @@ option go_package = "./upload";
 
 import "google/api/annotations.proto";
 
+// UploadService handles file uploads
 service UploadService {
+	// Upload a file
+	rpc FilePut(FilePutRequest) returns (FilePutResponse) {
+		option (google.api.http) = {
+			post: "/upload/v1/file"
+		};
+	}
+	// Retrieve a file
 	rpc FileGet(FileGetRequest) returns (FileGetResponse) {
 		option (google.api.http) = {
 			get: "/upload/v1/file/{fileID}"
 		};
 	}
+	// Delete a file
+	rpc FileDelete(FileDeleteRequest) returns (FileDeleteResponse) {
+		option (google.api.http) = {
+			delete: "/upload/v1/file/{fileID}"
+		};
+	}
+}
+
+message FilePutRequest {
+	// session id
+	string sessionID = 1;
+	int64 folderID = 2;
+	string authorization = 3;
+
+	// file upload
+	string name = 5;
+	string mimeType = 6;
+	int64  size = 7;
+	bytes  body = 8;
+
+	// metadata
+	string source = 10;
+	string keywords = 11;
+}
+message FilePutResponse {
+	File file = 1;
 }
 
 message FileGetRequest {
 	string sessionID = 1;
 	int64 fileID = 2;
+	string authorization = 3;
 }
 message FileGetResponse {
-	string url = 1;
+	File file = 1;
+}
+
+message FileDeleteRequest {
+	string sessionID = 1;
+	int64 fileID = 2;
+	string authorization = 3;
+}
+message FileDeleteResponse {}
+
+message File {
+	int64 ID = 1;
+	int64 userID = 2;
+
+	int64 folderID = 3;
+	Folder folder = 4;
+
+	string link = 5;
+
+	string name = 7;
+	string mimeType = 8;
+	int64  size = 9;
+
+	string source = 10;
+	string keywords = 11;
+	string stamp = 12;
+}
+
+message Folder {
+	int64 ID = 1;
+	int64 selfID = 2;
+	string title = 3;
+	bool HasRules = 4;
 }

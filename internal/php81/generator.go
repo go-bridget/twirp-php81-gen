@@ -7,18 +7,25 @@ import (
 	"github.com/emicklei/proto"
 )
 
+type FileGenerator interface {
+	Name() string
+	Bytes() []byte
+}
+
 type generator struct {
 	options *Options
 
 	hasRPC bool
 
-	files []*File
+	files []FileGenerator
+
+	service *Service
 }
 
 func NewGenerator(options *Options) *generator {
 	return &generator{
 		options: options,
-		files:   []*File{},
+		files:   make([]FileGenerator, 0),
 	}
 }
 
@@ -31,11 +38,11 @@ func (g *generator) Handlers() []proto.Handler {
 }
 
 func (g *generator) Import(i *proto.Import) {
-	log.Infof("importing %s", i.Filename)
+	log.Debugf("importing %s", i.Filename)
 
 	definition, err := loadProto(i.Filename)
 	if err != nil {
-		log.Infof("Can't load %s, err=%s, ignoring (want to make PR?)", i.Filename, err)
+		log.Debugf("Can't load %s, err=%s, ignoring", i.Filename, err)
 		return
 	}
 
@@ -50,16 +57,29 @@ func (g *generator) Import(i *proto.Import) {
 // The service part is mandatory, in order to generate
 // relevant rpc request and response structures.
 func (g *generator) RPC(rpc *proto.RPC) {
-	_, ok := rpc.Parent.(*proto.Service)
+	parent, ok := rpc.Parent.(*proto.Service)
 	if !ok {
 		panic("parent is not proto.service")
 	}
 	g.hasRPC = true
+
+	if g.service == nil {
+		filename := path.Join(g.options.Folder, parent.Name+".php")
+		g.service = NewService(filename, g.options.Namespace)
+		g.files = append(g.files, g.service)
+	}
+
+	svc := g.service
+	svc.comment = comment(parent.Comment)
+	svc.addFunction([]string{
+		"/** " + comment(rpc.Comment) + " */",
+		"public function " + rpc.Name + "(" + rpc.RequestType + " $req): " + rpc.ReturnsType + ";",
+	});
 }
 
 func (g *generator) Message(msg *proto.Message) {
 	filename := path.Join(g.options.Folder, msg.Name+".php")
-	file := NewFile(filename, g.options.Namespace)
+	file := NewMessage(filename, g.options.Namespace)
 
 	allFields := msg.Elements
 
@@ -77,7 +97,7 @@ func (g *generator) Message(msg *proto.Message) {
 	}
 
 	addField := func(field *proto.Field, repeated bool) {
-		file.AddField(Field{
+		file.addField(Field{
 			Name:     field.Name,
 			Type:     field.Type,
 			Repeated: repeated,
@@ -101,5 +121,4 @@ func (g *generator) Message(msg *proto.Message) {
 	}
 
 	g.files = append(g.files, file)
-	// TODO: add fields to the message generator
 }

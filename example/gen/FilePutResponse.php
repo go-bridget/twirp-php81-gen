@@ -2,7 +2,7 @@
 
 namespace Twirp;
 
-class FileGetResponse
+class FilePutResponse
 {
 	public function __construct(
 		public mixed $file, // File

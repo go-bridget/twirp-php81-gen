@@ -2,7 +2,7 @@
 
 namespace Twirp;
 
-class FileGetRequest
+class FileDeleteRequest
 {
 	public function __construct(
 		public string $sessionID,

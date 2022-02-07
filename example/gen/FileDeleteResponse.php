@@ -2,9 +2,8 @@
 
 namespace Twirp;
 
-class FileGetResponse
+class FileDeleteResponse
 {
 	public function __construct(
-		public mixed $file, // File
 	) {}
 }
