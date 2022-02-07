@@ -60,6 +60,46 @@ func (g *generator) RPC(rpc *proto.RPC) {
 func (g *generator) Message(msg *proto.Message) {
 	filename := path.Join(g.options.Folder, msg.Name+".php")
 	file := NewFile(filename, g.options.Namespace)
+
+	allFields := msg.Elements
+
+	for _, element := range msg.Elements {
+		switch val := element.(type) {
+		case *proto.Oneof:
+			// We're unpacking val.Elements into the field list,
+			// which may or may not be correct. The oneof semantics
+			// likely bring in edge-cases.
+			allFields = append(allFields, val.Elements...)
+		default:
+			// No need to unpack for *proto.NormalField,...
+			log.Debugf("prepare: uknown field type: %T", element)
+		}
+	}
+
+	addField := func(field *proto.Field, repeated bool) {
+		file.AddField(Field{
+			Name: field.Name,
+			Type: field.Type,
+			Repeated: repeated,
+		})
+	}
+
+	for _, element := range allFields {
+		switch val := element.(type) {
+		case *proto.Comment:
+		case *proto.Oneof:
+			// Nothing.
+		case *proto.OneOfField:
+			addField(val.Field, false)
+		case *proto.MapField:
+			addField(val.Field, false)
+		case *proto.NormalField:
+			addField(val.Field, val.Repeated)
+		default:
+			log.Infof("Unknown field type: %T", element)
+		}
+	}
+
 	g.files = append(g.files, file)
 	// TODO: add fields to the message generator
 }
