@@ -1,4 +1,4 @@
-package php81
+package model
 
 import (
 	"bytes"
@@ -6,42 +6,40 @@ import (
 	"strings"
 )
 
-type Service struct {
+type Router struct {
 	// Name (full path) for the generated file
 	name string
 
 	// Namespace to use in file
 	namespace string
 
-	// Comment from proto file
-	comment string
-
 	// Used objects from other namespaces
 	uses []string
 
-	// Fields
-	funcs []string
+	// Routes
+	routes []*Route
 
 	// Contents for final generated file
 	contents bytes.Buffer
 }
 
-func NewService(name, namespace string) *Service {
-	return &Service{
+func NewRouter(name, namespace string, routes ...*Route) *Router {
+	return &Router{
 		name:      name,
 		namespace: namespace,
+		routes:    routes,
 	}
 }
 
-func (f *Service) Name() string {
+func (f *Router) AddRoute(n *Route) {
+	f.routes = append(f.routes, n)
+}
+
+func (f *Router) Name() string {
 	return f.name
 }
 
-func (f *Service) addFunction(def []string) {
-	f.funcs = append(f.funcs, "\t" + strings.TrimSpace(strings.Join(def, "\n\t")))
-}
-
-func (f *Service) Bytes() []byte {
+func (f *Router) Bytes() []byte {
 	f.print("<?php")
 	f.print()
 	f.print("namespace " + f.namespace + ";")
@@ -53,25 +51,27 @@ func (f *Service) Bytes() []byte {
 		f.print()
 	}
 	className := strings.TrimSuffix(path.Base(f.name), ".php")
-	f.print("/** " + f.comment + " */")
-	f.print("interface " + className)
+
+	serviceClassName := strings.ReplaceAll(className, "Router", "")
+
+	f.print("class " + className)
 	f.print("{")
-	for k, v := range f.funcs {
-		if (k > 0) {
-			f.print()
-		}
-		f.print(v)
+	f.print("\tpublic function Mount(\\Slim\\App $app, " + serviceClassName + " $service)")
+	f.print("\t{")
+	for _, v := range f.routes {
+		f.print("\t\t$app->map('" + strings.ToLower(v.Method) + "', '" + v.URL + "', [$service, '" + v.Name + "'])->setName('" + v.Name + "');")
 	}
+	f.print("\t}")
 	f.print("}")
 
 	return f.contents.Bytes()
 }
 
-func (f *Service) use(name string) {
+func (f *Router) use(name string) {
 	f.uses = append(f.uses, name)
 }
 
-func (f *Service) print(lines ...string) {
+func (f *Router) print(lines ...string) {
 	if len(lines) == 0 {
 		f.contents.WriteString("\n")
 		return

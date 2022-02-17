@@ -1,4 +1,4 @@
-package php81
+package model
 
 import (
 	"bytes"
@@ -30,7 +30,7 @@ func NewMessage(name, namespace string) *Message {
 	}
 }
 
-func (f *Message) addField(n Field) {
+func (f *Message) AddField(n Field) {
 	f.fields = append(f.fields, n)
 }
 

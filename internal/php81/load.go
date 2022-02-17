@@ -1,6 +1,8 @@
 package php81
 
 import (
+	"fmt"
+
 	"github.com/emicklei/proto"
 )
 
@@ -8,7 +10,7 @@ import (
 func Load(filename string, options *Options) ([]FileGenerator, error) {
 	definition, err := loadProto(filename)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("got error loading file %s: %w", filename, err)
 	}
 
 	gen := NewGenerator(options)
@@ -17,7 +19,7 @@ func Load(filename string, options *Options) ([]FileGenerator, error) {
 	proto.Walk(definition, gen.Handlers()...)
 
 	if gen.hasRPC {
-		return gen.files, nil
+		return gen.Files(), nil
 	}
 	return nil, nil
 }

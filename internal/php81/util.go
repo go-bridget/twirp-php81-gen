@@ -4,8 +4,12 @@ import (
 	"os"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/emicklei/proto"
 )
+
+var debugPrint = spew.Dump
+var debugString = spew.Sdump
 
 func loadProto(filename string) (*proto.Proto, error) {
 	reader, err := os.Open(filename)
