@@ -34,8 +34,9 @@ func (g *generator) Files() []FileGenerator {
 	copy(files, g.files)
 
 	router := model.NewRouter(path.Join(g.options.Folder, g.name+"Router.php"), g.options.Namespace, g.routes...)
+	handler := model.NewHandler(path.Join(g.options.Folder, g.name+"Handler.php"), g.options.Namespace, g.routes...)
 
-	files = append(files, g.service, router)
+	files = append(files, g.service, router, handler)
 	return files
 }
 

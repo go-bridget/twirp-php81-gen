@@ -52,14 +52,15 @@ func (f *Router) Bytes() []byte {
 	}
 	className := strings.TrimSuffix(path.Base(f.name), ".php")
 
-	serviceClassName := strings.ReplaceAll(className, "Router", "")
+	handlerClassName := strings.ReplaceAll(className, "Router", "Handler")
 
 	f.print("class " + className)
 	f.print("{")
-	f.print("\tpublic function Mount(\\Slim\\App $app, " + serviceClassName + " $service)")
+	f.print("\tpublic function Mount(\\Slim\\App $app)")
 	f.print("\t{")
 	for _, v := range f.routes {
-		f.print("\t\t$app->map('" + strings.ToLower(v.Method) + "', '" + v.URL + "', [$service, '" + v.Name + "'])->setName('" + v.Name + "');")
+		handlerCall := "\\" + f.namespace + "\\" + handlerClassName + ":" + v.Name
+		f.print("\t\t$app->map('" + strings.ToLower(v.Method) + "', '" + v.URL + "', '" + handlerCall + "')->setName('" + v.Name + "');")
 	}
 	f.print("\t}")
 	f.print("}")
