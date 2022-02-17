@@ -60,7 +60,7 @@ func (f *Router) Bytes() []byte {
 	f.print("\t{")
 	for _, v := range f.routes {
 		handlerCall := "\\" + f.namespace + "\\" + handlerClassName + ":" + v.Name
-		f.print("\t\t$app->map('" + strings.ToLower(v.Method) + "', '" + v.URL + "', '" + handlerCall + "')->setName('" + v.Name + "');")
+		f.print("\t\t$app->" + strings.ToLower(v.Method) + "('" + v.URL + "', '" + handlerCall + "')->setName('" + v.Name + "');")
 	}
 	f.print("\t}")
 	f.print("}")
