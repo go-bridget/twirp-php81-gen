@@ -1,6 +1,7 @@
 .PHONY: all build test clean google
 
-PATH := $(PWD)/build:$(PATH)
+export CGO_ENABLED=0
+export PATH := $(PWD)/build:$(PATH)
 
 all:
 	@drone exec
