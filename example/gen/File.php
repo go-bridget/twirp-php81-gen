@@ -5,16 +5,16 @@ namespace Twirp;
 class File
 {
 	public function __construct(
-		public string $ID, // int64
-		public string $userID, // int64
-		public string $folderID, // int64
-		public mixed $folder, // Folder
-		public string $link,
-		public string $name,
-		public string $mimeType,
-		public string $size, // int64
-		public string $source,
-		public string $keywords,
-		public string $stamp,
+		public ?int $ID = 0, // int64
+		public ?int $userID = 0, // int64
+		public ?int $folderID = 0, // int64
+		public ?Folder $folder = null,
+		public ?string $link = "",
+		public ?string $name = "",
+		public ?string $mimeType = "",
+		public ?int $size = 0, // int64
+		public ?string $source = "",
+		public ?string $keywords = "",
+		public ?string $stamp = "",
 	) {}
 }

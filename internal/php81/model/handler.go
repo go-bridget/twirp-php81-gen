@@ -74,10 +74,6 @@ func (f *Handler) Bytes() []byte {
 	return f.contents.Bytes()
 }
 
-func (f *Handler) use(name string) {
-	f.uses = append(f.uses, name)
-}
-
 func (f *Handler) print(lines ...string) {
 	if len(lines) == 0 {
 		f.contents.WriteString("\n")

@@ -30,6 +30,10 @@ func NewService(name, namespace string) *Service {
 	return &Service{
 		name:      name,
 		namespace: namespace,
+		uses: []string{
+			"Psr\\Http\\Message\\ResponseInterface as Response",
+			"Psr\\Http\\Message\\ServerRequestInterface as Request",
+		},
 	}
 }
 
@@ -65,10 +69,6 @@ func (f *Service) Bytes() []byte {
 	f.print("}")
 
 	return f.contents.Bytes()
-}
-
-func (f *Service) use(name string) {
-	f.uses = append(f.uses, name)
 }
 
 func (f *Service) print(lines ...string) {

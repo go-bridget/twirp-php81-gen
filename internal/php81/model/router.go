@@ -2,6 +2,7 @@ package model
 
 import (
 	"bytes"
+	"fmt"
 	"path"
 	"strings"
 )
@@ -52,24 +53,67 @@ func (f *Router) Bytes() []byte {
 	}
 	className := strings.TrimSuffix(path.Base(f.name), ".php")
 
-	handlerClassName := strings.ReplaceAll(className, "Router", "Handler")
+	// handlerClassName := strings.ReplaceAll(className, "Router", "Handler")
 
 	f.print("class " + className)
 	f.print("{")
-	f.print("\tpublic function Mount(\\Slim\\App $app)")
+	f.print("\tpublic function Mount(\\Slim\\App $app, string $serviceClass)")
 	f.print("\t{")
-	for _, v := range f.routes {
-		handlerCall := "\\" + f.namespace + "\\" + handlerClassName + ":" + v.Name
-		f.print("\t\t$app->" + strings.ToLower(v.Method) + "('" + v.URL + "', '" + handlerCall + "')->setName('" + v.Name + "');")
+
+	urls := make([]string, len(f.routes))
+	for k, v := range f.routes {
+		urls[k] = v.URL
 	}
+
+	var prefix string
+	if len(urls) > 0 {
+		prefix = urls[0]
+		for _, url := range urls {
+			for prefix != "" && !strings.HasPrefix(url, prefix) {
+				prefix = prefix[0 : len(prefix)-1]
+			}
+		}
+	}
+	prefix = strings.TrimSuffix(prefix, "/")
+
+	if prefix != "" {
+		f.print("\t\t$app->group(\"" + prefix + "\", function (RouteCollectorProxy $group)")
+		f.print("\t\t{")
+		f.print("\t\t\t$service = new $serviceClass;")
+		for _, v := range f.routes {
+			var (
+				methods = "[\"" + strings.ToUpper(v.Method) + "\"]"
+				url     = "\"" + strings.TrimPrefix(v.URL, prefix) + "\""
+				name    = "\"" + v.Name + "\""
+				handler = "[$service, \"" + v.Name + "\"]"
+			)
+			f.print(fmt.Sprintf("\t\t\t$app->map(%s, %s, %s)->setName(%s);", methods, url, handler, name))
+		}
+		f.print("\t\t}")
+		f.print("\t}")
+		f.print("}")
+		return f.contents.Bytes()
+	}
+
+	for _, v := range f.routes {
+		var (
+			methods = "[\"" + strings.ToUpper(v.Method) + "\"]"
+			url     = "\"" + strings.TrimPrefix(v.URL, prefix) + "\""
+			name    = "\"" + v.Name + "\""
+			handler = "$request" + v.Name
+		)
+		f.print("\t\t$request" + v.Name + " = function(Request $request, Response $response, array $args) {")
+		f.print("\t\t\t$service = new $serviceClass;")
+		f.print("\t\t\t$service->" + v.Name + "($request, $response, $args);")
+		f.print("\t\t};")
+
+		f.print(fmt.Sprintf("\t\t$app->map(%s, %s, %s)->setName(%s);", methods, url, handler, name))
+	}
+
 	f.print("\t}")
 	f.print("}")
 
 	return f.contents.Bytes()
-}
-
-func (f *Router) use(name string) {
-	f.uses = append(f.uses, name)
 }
 
 func (f *Router) print(lines ...string) {

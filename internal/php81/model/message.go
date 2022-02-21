@@ -2,6 +2,7 @@ package model
 
 import (
 	"bytes"
+	"fmt"
 	"path"
 	"strings"
 )
@@ -38,37 +39,22 @@ func (f *Message) Name() string {
 	return f.name
 }
 
-func (f *Message) typeAlias(t string, repeated bool) string {
-	if repeated {
-		return "array"
+func (f *Message) nativeDefault(kind string) string {
+	switch kind {
+	case "int":
+		return "0"
+	case "array":
+		return "[]"
+	case "double":
+		return "0.0"
+	case "float":
+		return "0.0"
+	case "string":
+		return "\"\""
+	case "bool":
+		return "false"
 	}
-	if t == "string" || t == "float" {
-		return t
-	}
-	if strings.Contains(t, "int64") {
-		return "string"
-	}
-	if strings.Contains(t, "int") {
-		return "int"
-	}
-	if strings.Contains(t, "double") {
-		return "float"
-	}
-	if strings.Contains(t, "bool") {
-		return "bool"
-	}
-	return "mixed"
-}
-
-func (f *Message) typeLiteral(t string, repeated bool) string {
-	if repeated {
-		return " // []" + t
-	}
-	alias := f.typeAlias(t, repeated)
-	if alias != t {
-		return " // " + t
-	}
-	return ""
+	return "null"
 }
 
 func (f *Message) Bytes() []byte {
@@ -87,16 +73,33 @@ func (f *Message) Bytes() []byte {
 	f.print("{")
 	f.print("\tpublic function __construct(")
 	for _, v := range f.fields {
-		f.print("\t\tpublic " + f.typeAlias(v.Type, v.Repeated) + " $" + v.Name + "," + f.typeLiteral(v.Type, v.Repeated))
+		fieldType := v.Type
+		fieldFormat := v.Type
+		if v.Repeated {
+			fieldType = "array"
+		} else {
+			if p, ok := typeAliases[v.Type]; ok {
+				fieldType = p.Type
+				fieldFormat = p.Format
+			}
+		}
+		if fieldType == fieldFormat {
+			fieldFormat = ""
+		}
+		format := "\t\tpublic ?%s $%s = %s,"
+		if fieldFormat != "" {
+			// add comment with field format
+			format += " // %s"
+			f.print(fmt.Sprintf(format, fieldType, v.Name, f.nativeDefault(fieldType), fieldFormat))
+			continue
+		}
+		// field without separate format comment
+		f.print(fmt.Sprintf(format, fieldType, v.Name, f.nativeDefault(fieldType)))
 	}
 	f.print("\t) {}")
 	f.print("}")
 
 	return f.contents.Bytes()
-}
-
-func (f *Message) use(name string) {
-	f.uses = append(f.uses, name)
 }
 
 func (f *Message) print(lines ...string) {
