@@ -7,9 +7,12 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 class UploadServiceHandler
 {
-	public function __construct(
-		public $service = new UploadService;
-	) {}
+	private UploadService $service;
+
+	public function __construct(UploadService $service)
+	{
+		$this->service = $service;
+	}
 
 	public function FilePut(Request $request, Response $response, array $args): Response
 	{

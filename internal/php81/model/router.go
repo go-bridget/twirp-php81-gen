@@ -29,6 +29,11 @@ func NewRouter(name, namespace string, routes ...*Route) *Router {
 		name:      name,
 		namespace: namespace,
 		routes:    routes,
+		uses: []string{
+			"Psr\\Http\\Message\\ResponseInterface as Response",
+			"Psr\\Http\\Message\\ServerRequestInterface as Request",
+			"Slim\\Routing\\RouteCollectorProxy",
+		},
 	}
 }
 
@@ -53,7 +58,7 @@ func (f *Router) Bytes() []byte {
 	}
 	className := strings.TrimSuffix(path.Base(f.name), ".php")
 
-	// handlerClassName := strings.ReplaceAll(className, "Router", "Handler")
+	handlerClassName := strings.ReplaceAll(className, "Router", "Handler")
 
 	f.print("class " + className)
 	f.print("{")
@@ -77,19 +82,21 @@ func (f *Router) Bytes() []byte {
 	prefix = strings.TrimSuffix(prefix, "/")
 
 	if prefix != "" {
-		f.print("\t\t$app->group(\"" + prefix + "\", function (RouteCollectorProxy $group)")
+		f.print("\t\t$app->group(\"" + prefix + "\", function (RouteCollectorProxy $group) use ($serviceClass)")
 		f.print("\t\t{")
-		f.print("\t\t\t$service = new $serviceClass;")
 		for _, v := range f.routes {
 			var (
 				methods = "[\"" + strings.ToUpper(v.Method) + "\"]"
 				url     = "\"" + strings.TrimPrefix(v.URL, prefix) + "\""
 				name    = "\"" + v.Name + "\""
-				handler = "[$service, \"" + v.Name + "\"]"
 			)
-			f.print(fmt.Sprintf("\t\t\t$app->map(%s, %s, %s)->setName(%s);", methods, url, handler, name))
+			f.print(fmt.Sprintf("\t\t\t$group->map(%s, %s, function (Request $request, Response $response, array $args) use ($serviceClass) {", methods, url))
+			f.print("\t\t\t\t$service = new $serviceClass;")
+			f.print(fmt.Sprintf("\t\t\t\t$handler = new %s($service);", handlerClassName))
+			f.print(fmt.Sprintf("\t\t\t\treturn $handler->%s($request, $response, $args);", v.Name))
+			f.print(fmt.Sprintf("\t\t\t})->setName(%s);", name))
 		}
-		f.print("\t\t}")
+		f.print("\t\t});")
 		f.print("\t}")
 		f.print("}")
 		return f.contents.Bytes()

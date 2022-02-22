@@ -56,10 +56,13 @@ func (f *Handler) Bytes() []byte {
 
 	f.print("class " + className)
 	f.print("{")
+	f.print(fmt.Sprintf("\tprivate %s $service;", serviceClassName))
+	f.print()
 
-	f.print("\tpublic function __construct(")
-	f.print(fmt.Sprintf("\t\tpublic $service = new %s;", serviceClassName))
-	f.print("\t) {}")
+	f.print(fmt.Sprintf("\tpublic function __construct(%s $service)", serviceClassName))
+	f.print("\t{");
+	f.print("\t\t$this->service = $service;");
+	f.print("\t}");
 
 	for _, v := range f.routes {
 		f.print()
