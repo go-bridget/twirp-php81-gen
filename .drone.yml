@@ -6,11 +6,17 @@ name: build
 
 steps:
 - name: build
-  image: golang:1.17-alpine
-  pull: if-not-exists
+  image: internal/twirp-php81-gen:build
   commands:
-  - apk add make
   - make build test clean
+
+- name: codegen
+  image: internal/twirp-php81-gen:build
+  commands:
+  - cp build/* /usr/local/bin
+  - buf --version
+  - buf mod update
+  - buf generate --template buf.gen.yaml --path example
 
 - name: lint
   image: golangci/golangci-lint:v1.38.0
