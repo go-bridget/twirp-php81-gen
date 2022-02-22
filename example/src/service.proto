@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package support;
+
+option go_package = "./support";
+
+import "google/api/annotations.proto";
+
+service SupportTasks {
+	rpc Index(Empty) returns (Empty) {
+		option (google.api.http) = {
+			get: "/"
+		};
+	}
+}
+
+message Empty {}
