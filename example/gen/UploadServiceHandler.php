@@ -16,19 +16,25 @@ class UploadServiceHandler
 
 	public function FilePut(Request $request, Response $response, array $args): Response
 	{
-		$serviceRequest = new FilePutRequest($request);
-		$response->writeJSON($this->service->FilePut($serviceRequest));
+		$params = new FilePutRequest($request);
+		$data = $this->service->FilePut($params);
+		$response->getBody()->write(json_encode($data));
+		return $response->withHeader('Content-Type', 'application/json');
 	}
 
 	public function FileGet(Request $request, Response $response, array $args): Response
 	{
-		$serviceRequest = new FileGetRequest($request);
-		$response->writeJSON($this->service->FileGet($serviceRequest));
+		$params = new FileGetRequest($request);
+		$data = $this->service->FileGet($params);
+		$response->getBody()->write(json_encode($data));
+		return $response->withHeader('Content-Type', 'application/json');
 	}
 
 	public function FileDelete(Request $request, Response $response, array $args): Response
 	{
-		$serviceRequest = new FileDeleteRequest($request);
-		$response->writeJSON($this->service->FileDelete($serviceRequest));
+		$params = new FileDeleteRequest($request);
+		$data = $this->service->FileDelete($params);
+		$response->getBody()->write(json_encode($data));
+		return $response->withHeader('Content-Type', 'application/json');
 	}
 }
