@@ -7,9 +7,12 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 class SupportTasksHandler
 {
-	public function __construct(
-		public $service = new SupportTasks;
-	) {}
+	private SupportTasks $service;
+
+	public function __construct(SupportTasks $service)
+	{
+		$this->service = $service;
+	}
 
 	public function Index(Request $request, Response $response, array $args): Response
 	{
