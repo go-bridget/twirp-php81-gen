@@ -1,14 +1,18 @@
 package model
 
+import (
+	"github.com/emicklei/proto"
+)
+
 type Route struct {
-	Name   string
+	RPC    *proto.RPC
 	Method string
 	URL    string
 }
 
-func NewRoute(name, method, url string) *Route {
+func NewRoute(rpc *proto.RPC, method, url string) *Route {
 	return &Route{
-		Name:   name,
+		RPC:    rpc,
 		Method: method,
 		URL:    url,
 	}

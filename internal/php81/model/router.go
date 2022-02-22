@@ -57,7 +57,7 @@ func (f *Router) Bytes() []byte {
 	}
 	className := f.name + "Router"
 
-	handlerClassName := f.name + "Handler"
+	// handlerClassName := f.name + "Handler"
 
 	f.print("class " + className)
 	f.print("{")
@@ -81,19 +81,15 @@ func (f *Router) Bytes() []byte {
 	prefix = strings.TrimSuffix(prefix, "/")
 
 	if prefix != "" {
-		f.print("\t\t$app->group(\"" + prefix + "\", function (RouteCollectorProxy $group) use ($serviceClass)")
-		f.print("\t\t{")
+		f.print("\t\t$app->group(\"" + prefix + "\", function (RouteCollectorProxy $group) use ($serviceClass) {")
 		for _, v := range f.routes {
 			var (
 				methods = "[\"" + strings.ToUpper(v.Method) + "\"]"
 				url     = "\"" + strings.TrimPrefix(v.URL, prefix) + "\""
-				name    = "\"" + v.Name + "\""
+				name    = "\"" + v.RPC.Name + "\""
+				handler = "$serviceClass . \":" + v.RPC.Name + "\""
 			)
-			f.print(fmt.Sprintf("\t\t\t$group->map(%s, %s, function (Request $request, Response $response, array $args) use ($serviceClass) {", methods, url))
-			f.print("\t\t\t\t$service = new $serviceClass;")
-			f.print(fmt.Sprintf("\t\t\t\t$handler = new %s($service);", handlerClassName))
-			f.print(fmt.Sprintf("\t\t\t\treturn $handler->%s($request, $response, $args);", v.Name))
-			f.print(fmt.Sprintf("\t\t\t})->setName(%s);", name))
+			f.print(fmt.Sprintf("\t\t\t$group->map(%s, %s, %s)->setName(%s);", methods, url, handler, name))
 		}
 		f.print("\t\t});")
 		f.print("\t}")
@@ -105,12 +101,12 @@ func (f *Router) Bytes() []byte {
 		var (
 			methods = "[\"" + strings.ToUpper(v.Method) + "\"]"
 			url     = "\"" + strings.TrimPrefix(v.URL, prefix) + "\""
-			name    = "\"" + v.Name + "\""
-			handler = "$request" + v.Name
+			name    = "\"" + v.RPC.Name + "\""
+			handler = "$request" + v.RPC.Name
 		)
-		f.print("\t\t$request" + v.Name + " = function(Request $request, Response $response, array $args) {")
+		f.print("\t\t$request" + v.RPC.Name + " = function(Request $request, Response $response, array $args) {")
 		f.print("\t\t\t$service = new $serviceClass;")
-		f.print("\t\t\t$service->" + v.Name + "($request, $response, $args);")
+		f.print("\t\t\t$service->" + v.RPC.Name + "($request, $response, $args);")
 		f.print("\t\t};")
 
 		f.print(fmt.Sprintf("\t\t$app->map(%s, %s, %s)->setName(%s);", methods, url, handler, name))

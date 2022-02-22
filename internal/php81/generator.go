@@ -30,14 +30,10 @@ type generator struct {
 }
 
 func (g *generator) Files() []FileGenerator {
-	files := make([]FileGenerator, len(g.files))
-	copy(files, g.files)
-
 	router := model.NewRouter(g.name, g.options.Namespace, g.routes...)
 	handler := model.NewHandler(g.name, g.options.Namespace, g.routes...)
 
-	files = append(files, g.service, router, handler)
-	return files
+	return append([]FileGenerator{g.service, router, handler}, g.files...)
 }
 
 func NewGenerator(options *Options) *generator {
@@ -111,8 +107,7 @@ func (g *generator) Option(option *proto.Option) {
 	for _, v := range option.AggregatedConstants {
 		method := strings.ToLower(v.Name)
 		url := v.Literal.Source
-		name := rpc.Name
-		g.routes = append(g.routes, model.NewRoute(name, method, url))
+		g.routes = append(g.routes, model.NewRoute(rpc, method, url))
 	}
 }
 

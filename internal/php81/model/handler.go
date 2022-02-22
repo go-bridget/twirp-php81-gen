@@ -64,10 +64,12 @@ func (f *Handler) Bytes() []byte {
 
 	for _, v := range f.routes {
 		f.print()
-		f.print(fmt.Sprintf("\tpublic function %s(Request $request, Response $response, array $args): Response", v.Name))
+		f.print(fmt.Sprintf("\tpublic function %s(Request $request, Response $response, array $args): Response", v.RPC.Name))
 		f.print("\t{")
-		f.print(fmt.Sprintf("\t\t$serviceRequest = new %sRequest($request);", v.Name))
-		f.print(fmt.Sprintf("\t\t$response->writeJSON($this->service->%s($serviceRequest));", v.Name))
+		f.print(fmt.Sprintf("\t\t$params = new %s($request);", v.RPC.RequestType))
+		f.print(fmt.Sprintf("\t\t$data = $this->service->%s($params);", v.RPC.Name))
+		f.print("\t\t$response->getBody()->write(json_encode($data));")
+		f.print("\t\treturn $response->withHeader('Content-Type', 'application/json');")
 		f.print("\t}")
 	}
 	f.print("}")
