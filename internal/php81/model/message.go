@@ -3,8 +3,6 @@ package model
 import (
 	"bytes"
 	"fmt"
-	"path"
-	"strings"
 )
 
 type Message struct {
@@ -35,8 +33,8 @@ func (f *Message) AddField(n Field) {
 	f.fields = append(f.fields, n)
 }
 
-func (f *Message) Name() string {
-	return f.name
+func (f *Message) Filename() string {
+	return f.name + ".php"
 }
 
 func (f *Message) nativeDefault(kind string) string {
@@ -68,7 +66,7 @@ func (f *Message) Bytes() []byte {
 	if len(f.uses) > 0 {
 		f.print()
 	}
-	className := strings.TrimSuffix(path.Base(f.name), ".php")
+	className := f.name
 	f.print("class " + className)
 	f.print("{")
 	f.print("\tpublic function __construct(")

@@ -11,7 +11,7 @@ import (
 )
 
 type FileGenerator interface {
-	Name() string
+	Filename() string
 	Bytes() []byte
 }
 
@@ -33,8 +33,8 @@ func (g *generator) Files() []FileGenerator {
 	files := make([]FileGenerator, len(g.files))
 	copy(files, g.files)
 
-	router := model.NewRouter(path.Join(g.options.Folder, g.name+"Router.php"), g.options.Namespace, g.routes...)
-	handler := model.NewHandler(path.Join(g.options.Folder, g.name+"Handler.php"), g.options.Namespace, g.routes...)
+	router := model.NewRouter(g.name, g.options.Namespace, g.routes...)
+	handler := model.NewHandler(g.name, g.options.Namespace, g.routes...)
 
 	files = append(files, g.service, router, handler)
 	return files
@@ -59,7 +59,7 @@ func (g *generator) Handlers() []proto.Handler {
 
 func (g *generator) Service(service *proto.Service) {
 	g.name = service.Name
-	filename := path.Join(g.options.Folder, service.Name+".php")
+	filename := path.Join(g.options.Folder, service.Name)
 	g.service = model.NewService(filename, g.options.Namespace)
 }
 
@@ -117,8 +117,7 @@ func (g *generator) Option(option *proto.Option) {
 }
 
 func (g *generator) Message(msg *proto.Message) {
-	filename := path.Join(g.options.Folder, msg.Name+".php")
-	file := model.NewMessage(filename, g.options.Namespace)
+	file := model.NewMessage(msg.Name, g.options.Namespace)
 
 	allFields := msg.Elements
 

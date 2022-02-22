@@ -2,7 +2,6 @@ package model
 
 import (
 	"bytes"
-	"path"
 	"strings"
 )
 
@@ -37,8 +36,8 @@ func NewService(name, namespace string) *Service {
 	}
 }
 
-func (f *Service) Name() string {
-	return f.name
+func (f *Service) Filename() string {
+	return f.name + ".php"
 }
 
 func (f *Service) AddFunction(def []string) {
@@ -56,7 +55,7 @@ func (f *Service) Bytes() []byte {
 	if len(f.uses) > 0 {
 		f.print()
 	}
-	className := strings.TrimSuffix(path.Base(f.name), ".php")
+	className := f.name
 	f.print("/** " + f.Comment + " */")
 	f.print("interface " + className)
 	f.print("{")

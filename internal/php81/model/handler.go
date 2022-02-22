@@ -3,8 +3,6 @@ package model
 import (
 	"bytes"
 	"fmt"
-	"path"
-	"strings"
 )
 
 type Handler struct {
@@ -36,8 +34,8 @@ func NewHandler(name, namespace string, routes ...*Route) *Handler {
 	}
 }
 
-func (f *Handler) Name() string {
-	return f.name
+func (f *Handler) Filename() string {
+	return f.name + "Handler.php"
 }
 
 func (f *Handler) Bytes() []byte {
@@ -51,8 +49,8 @@ func (f *Handler) Bytes() []byte {
 	if len(f.uses) > 0 {
 		f.print()
 	}
-	className := strings.TrimSuffix(path.Base(f.name), ".php")
-	serviceClassName := strings.ReplaceAll(className, "Handler", "")
+	className := f.name + "Handler"
+	serviceClassName := f.name
 
 	f.print("class " + className)
 	f.print("{")
@@ -60,9 +58,9 @@ func (f *Handler) Bytes() []byte {
 	f.print()
 
 	f.print(fmt.Sprintf("\tpublic function __construct(%s $service)", serviceClassName))
-	f.print("\t{");
-	f.print("\t\t$this->service = $service;");
-	f.print("\t}");
+	f.print("\t{")
+	f.print("\t\t$this->service = $service;")
+	f.print("\t}")
 
 	for _, v := range f.routes {
 		f.print()

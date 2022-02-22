@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"path"
 
 	"github.com/apex/log"
 	"github.com/davecgh/go-spew/spew"
@@ -49,7 +50,7 @@ func main() {
 			}
 
 			for _, file := range files {
-				g := gen.NewGeneratedFile(file.Name(), f.GoImportPath)
+				g := gen.NewGeneratedFile(path.Join(*folder, file.Filename()), f.GoImportPath)
 				if _, err := g.Write(file.Bytes()); err != nil {
 					return err
 				}

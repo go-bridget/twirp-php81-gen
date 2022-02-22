@@ -3,7 +3,6 @@ package model
 import (
 	"bytes"
 	"fmt"
-	"path"
 	"strings"
 )
 
@@ -41,8 +40,8 @@ func (f *Router) AddRoute(n *Route) {
 	f.routes = append(f.routes, n)
 }
 
-func (f *Router) Name() string {
-	return f.name
+func (f *Router) Filename() string {
+	return f.name + "Router.php"
 }
 
 func (f *Router) Bytes() []byte {
@@ -56,9 +55,9 @@ func (f *Router) Bytes() []byte {
 	if len(f.uses) > 0 {
 		f.print()
 	}
-	className := strings.TrimSuffix(path.Base(f.name), ".php")
+	className := f.name + "Router"
 
-	handlerClassName := strings.ReplaceAll(className, "Router", "Handler")
+	handlerClassName := f.name + "Handler"
 
 	f.print("class " + className)
 	f.print("{")
