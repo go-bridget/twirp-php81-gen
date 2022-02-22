@@ -1,0 +1,50 @@
+package model
+
+import (
+	"strings"
+
+	"github.com/emicklei/proto"
+)
+
+func comment(comment *proto.Comment) string {
+	if comment == nil {
+		return ""
+	}
+
+	result := ""
+	for _, line := range comment.Lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			break
+		}
+		result += " " + line
+	}
+	if len(result) > 1 {
+		return result[1:]
+	}
+	return ""
+}
+
+func description(comment *proto.Comment) string {
+	if comment == nil {
+		return ""
+	}
+
+	grab := false
+
+	result := []string{}
+	for _, line := range comment.Lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			if grab {
+				break
+			}
+			grab = true
+			continue
+		}
+		if grab {
+			result = append(result, line)
+		}
+	}
+	return strings.Join(result, "\n")
+}

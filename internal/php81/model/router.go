@@ -87,7 +87,7 @@ func (f *Router) Bytes() []byte {
 				methods = "[\"" + strings.ToUpper(v.Method) + "\"]"
 				url     = "\"" + strings.TrimPrefix(v.URL, prefix) + "\""
 				name    = "\"" + v.RPC.Name + "\""
-				handler = "$serviceClass . \":" + v.RPC.Name + "\""
+				handler = "$serviceClass . \":handle" + v.RPC.Name + "\""
 			)
 			f.print(fmt.Sprintf("\t\t\t$group->map(%s, %s, %s)->setName(%s);", methods, url, handler, name))
 		}
@@ -102,13 +102,8 @@ func (f *Router) Bytes() []byte {
 			methods = "[\"" + strings.ToUpper(v.Method) + "\"]"
 			url     = "\"" + strings.TrimPrefix(v.URL, prefix) + "\""
 			name    = "\"" + v.RPC.Name + "\""
-			handler = "$request" + v.RPC.Name
+			handler = "$serviceClass . \":handle" + v.RPC.Name + "\""
 		)
-		f.print("\t\t$request" + v.RPC.Name + " = function(Request $request, Response $response, array $args) {")
-		f.print("\t\t\t$service = new $serviceClass;")
-		f.print("\t\t\t$service->" + v.RPC.Name + "($request, $response, $args);")
-		f.print("\t\t};")
-
 		f.print(fmt.Sprintf("\t\t$app->map(%s, %s, %s)->setName(%s);", methods, url, handler, name))
 	}
 

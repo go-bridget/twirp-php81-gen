@@ -35,7 +35,7 @@ func NewHandler(name, namespace string, routes ...*Route) *Handler {
 }
 
 func (f *Handler) Filename() string {
-	return f.name + "Handler.php"
+	return f.name + "Handlers.php"
 }
 
 func (f *Handler) Bytes() []byte {
@@ -49,25 +49,18 @@ func (f *Handler) Bytes() []byte {
 	if len(f.uses) > 0 {
 		f.print()
 	}
-	className := f.name + "Handler"
+	className := f.name + "Handlers"
 	serviceClassName := f.name
 
-	f.print("class " + className)
+	f.print("abstract class " + className + " implements " + serviceClassName)
 	f.print("{")
-	f.print(fmt.Sprintf("\tprivate %s $service;", serviceClassName))
-	f.print()
-
-	f.print(fmt.Sprintf("\tpublic function __construct(%s $service)", serviceClassName))
-	f.print("\t{")
-	f.print("\t\t$this->service = $service;")
-	f.print("\t}")
-
 	for _, v := range f.routes {
 		f.print()
-		f.print(fmt.Sprintf("\tpublic function %s(Request $request, Response $response, array $args): Response", v.RPC.Name))
+		f.print(fmt.Sprintf("\t/** %s */", comment(v.RPC.Comment)))
+		f.print(fmt.Sprintf("\tpublic function handle%s(Request $request, Response $response, array $args): Response", v.RPC.Name))
 		f.print("\t{")
 		f.print(fmt.Sprintf("\t\t$params = new %s($request);", v.RPC.RequestType))
-		f.print(fmt.Sprintf("\t\t$data = $this->service->%s($params);", v.RPC.Name))
+		f.print(fmt.Sprintf("\t\t$data = $this->%s($params);", v.RPC.Name))
 		f.print("\t\t$response->getBody()->write(json_encode($data));")
 		f.print("\t\treturn $response->withHeader('Content-Type', 'application/json');")
 		f.print("\t}")

@@ -11,9 +11,9 @@ class UploadServiceRouter
 	public function Mount(\Slim\App $app, string $serviceClass)
 	{
 		$app->group("/upload/v1/file", function (RouteCollectorProxy $group) use ($serviceClass) {
-			$group->map(["POST"], "", $serviceClass . ":FilePut")->setName("FilePut");
-			$group->map(["GET"], "/{fileID}", $serviceClass . ":FileGet")->setName("FileGet");
-			$group->map(["DELETE"], "/{fileID}", $serviceClass . ":FileDelete")->setName("FileDelete");
+			$group->map(["POST"], "", $serviceClass . ":handleFilePut")->setName("FilePut");
+			$group->map(["GET"], "/{fileID}", $serviceClass . ":handleFileGet")->setName("FileGet");
+			$group->map(["DELETE"], "/{fileID}", $serviceClass . ":handleFileDelete")->setName("FileDelete");
 		});
 	}
 }
