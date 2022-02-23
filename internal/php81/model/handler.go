@@ -16,14 +16,8 @@ type Handler struct {
 	// Namespace to use in file
 	Namespace string
 
-	// Used objects from other namespaces
-	uses []string
-
 	// Routes
 	RPCs []*proto.RPC
-
-	// Contents for final generated file
-	contents bytes.Buffer
 }
 
 func NewHandler(name, namespace string, rpcs []*proto.RPC) *Handler {
@@ -62,16 +56,6 @@ func (f *Handler) Bytes() []byte {
 	sOut = strings.TrimSpace(sOut) + "\n"
 
 	return []byte(sOut)
-}
-
-func (f *Handler) print(lines ...string) {
-	if len(lines) == 0 {
-		f.contents.WriteString("\n")
-		return
-	}
-	for _, line := range lines {
-		f.contents.WriteString(line + "\n")
-	}
 }
 
 const handlerTemplate = `
