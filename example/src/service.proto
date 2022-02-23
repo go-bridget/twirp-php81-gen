@@ -6,7 +6,9 @@ option go_package = "./support";
 
 import "google/api/annotations.proto";
 
+// Support tasks service
 service SupportTasks {
+	// Index request
 	rpc Index(Empty) returns (Empty) {
 		option (google.api.http) = {
 			get: "/"

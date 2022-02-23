@@ -7,8 +7,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 abstract class SupportTasksHandlers implements SupportTasks
 {
-
-	/**  */
+	/** Index request */
 	public function handleIndex(Request $request, Response $response, array $args): Response
 	{
 		$params = new Empty($request);

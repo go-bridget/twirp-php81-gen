@@ -10,6 +10,7 @@ class SupportTasksRouter
 {
 	public function Mount(\Slim\App $app, string $serviceClass)
 	{
-		$app->map(["GET"], "/", $serviceClass . ":handleIndex")->setName("Index");
+		$app->post("/twirp/support.SupportTasks/Index", $serviceClass . ":handleIndex");
+		$app->get("/", $serviceClass . ":handleIndex");
 	}
 }

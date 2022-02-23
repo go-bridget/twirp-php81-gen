@@ -10,10 +10,11 @@ class UploadServiceRouter
 {
 	public function Mount(\Slim\App $app, string $serviceClass)
 	{
-		$app->group("/upload/v1/file", function (RouteCollectorProxy $group) use ($serviceClass) {
-			$group->map(["POST"], "", $serviceClass . ":handleFilePut")->setName("FilePut");
-			$group->map(["GET"], "/{fileID}", $serviceClass . ":handleFileGet")->setName("FileGet");
-			$group->map(["DELETE"], "/{fileID}", $serviceClass . ":handleFileDelete")->setName("FileDelete");
-		});
+		$app->post("/twirp/upload.UploadService/FilePut", $serviceClass . ":handleFilePut");
+		$app->post("/twirp/upload.UploadService/FileGet", $serviceClass . ":handleFileGet");
+		$app->post("/twirp/upload.UploadService/FileDelete", $serviceClass . ":handleFileDelete");
+		$app->post("/upload/v1/file", $serviceClass . ":handleFilePut");
+		$app->get("/upload/v1/file/{fileID}", $serviceClass . ":handleFileGet");
+		$app->delete("/upload/v1/file/{fileID}", $serviceClass . ":handleFileDelete");
 	}
 }

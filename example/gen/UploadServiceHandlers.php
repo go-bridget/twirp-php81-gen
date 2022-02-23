@@ -7,7 +7,6 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 abstract class UploadServiceHandlers implements UploadService
 {
-
 	/** Upload a file */
 	public function handleFilePut(Request $request, Response $response, array $args): Response
 	{
@@ -16,7 +15,6 @@ abstract class UploadServiceHandlers implements UploadService
 		$response->getBody()->write(json_encode($data));
 		return $response->withHeader('Content-Type', 'application/json');
 	}
-
 	/** Retrieve a file */
 	public function handleFileGet(Request $request, Response $response, array $args): Response
 	{
@@ -25,7 +23,6 @@ abstract class UploadServiceHandlers implements UploadService
 		$response->getBody()->write(json_encode($data));
 		return $response->withHeader('Content-Type', 'application/json');
 	}
-
 	/** Delete a file */
 	public function handleFileDelete(Request $request, Response $response, array $args): Response
 	{
