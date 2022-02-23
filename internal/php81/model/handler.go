@@ -2,72 +2,66 @@ package model
 
 import (
 	"bytes"
-	"fmt"
+	"strings"
+	"text/template"
+
+	"github.com/apex/log"
+	"github.com/emicklei/proto"
 )
 
 type Handler struct {
 	// Name (full path) for the generated file
-	name string
+	Name string
 
 	// Namespace to use in file
-	namespace string
+	Namespace string
 
 	// Used objects from other namespaces
 	uses []string
 
 	// Routes
-	routes []*Route
+	RPCs []*proto.RPC
 
 	// Contents for final generated file
 	contents bytes.Buffer
 }
 
-func NewHandler(name, namespace string, routes ...*Route) *Handler {
+func NewHandler(name, namespace string, rpcs []*proto.RPC) *Handler {
 	return &Handler{
-		name:      name,
-		namespace: namespace,
-		routes:    routes,
-		uses: []string{
-			"Psr\\Http\\Message\\ResponseInterface as Response",
-			"Psr\\Http\\Message\\ServerRequestInterface as Request",
-		},
+		Name:      name,
+		Namespace: namespace,
+		RPCs:      rpcs,
 	}
 }
 
 func (f *Handler) Filename() string {
-	return f.name + "Handlers.php"
+	return f.Name + "Handlers.php"
 }
 
 func (f *Handler) Bytes() []byte {
-	f.print("<?php")
-	f.print()
-	f.print("namespace " + f.namespace + ";")
-	f.print()
-	for _, use := range f.uses {
-		f.print("use " + use + ";")
+	funcMap := template.FuncMap{
+		"comment": comment,
 	}
-	if len(f.uses) > 0 {
-		f.print()
+	tpl, err := template.New("render-php81-handler").Funcs(funcMap).Parse(handlerTemplate)
+	if err != nil {
+		log.WithError(err).Errorf("error loading template for %s", f.Filename())
+		return nil
 	}
-	className := f.name + "Handlers"
-	serviceClassName := f.name
 
-	f.print("abstract class " + className + " implements " + serviceClassName)
-	f.print("{")
-	for _, v := range f.routes {
-		f.print()
-		f.print(fmt.Sprintf("\t/** %s */", comment(v.RPC.Comment)))
-		f.print(fmt.Sprintf("\tpublic function handle%s(Request $request, Response $response, array $args): Response", v.RPC.Name))
-		f.print("\t{")
-		f.print(fmt.Sprintf("\t\t$params = new %s($request);", v.RPC.RequestType))
-		f.print(fmt.Sprintf("\t\t$data = $this->%s($params);", v.RPC.Name))
-		f.print("\t\t$response->getBody()->write(json_encode($data));")
-		f.print("\t\treturn $response->withHeader('Content-Type', 'application/json');")
-		f.print("\t}")
+	out := new(bytes.Buffer)
+	err = tpl.Execute(out, f)
+	if err != nil {
+		log.WithError(err).Errorf("error rendering template for %s", f.Filename())
+		return nil
 	}
-	f.print("}")
 
-	return f.contents.Bytes()
+	sOut := out.String()
+	sOut = strings.ReplaceAll(sOut, "\n\n\n", "\n\n")
+	sOut = strings.ReplaceAll(sOut, "-\n", "")
+	sOut = strings.ReplaceAll(sOut, "\n-", "")
+	sOut = strings.TrimSpace(sOut) + "\n"
+
+	return []byte(sOut)
 }
 
 func (f *Handler) print(lines ...string) {
@@ -79,3 +73,26 @@ func (f *Handler) print(lines ...string) {
 		f.contents.WriteString(line + "\n")
 	}
 }
+
+const handlerTemplate = `
+<?php
+
+namespace {{ .Namespace }};
+
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
+
+abstract class {{ .Name }}Handlers implements {{ .Name }}
+{
+{{- range .RPCs }}
+	/** {{ .Comment | comment }} */
+	public function handle{{ .Name }}(Request $request, Response $response, array $args): Response
+	{
+		$params = new {{ .RequestType }}($request);
+		$data = $this->{{ .Name }}($params);
+		$response->getBody()->write(json_encode($data));
+		return $response->withHeader('Content-Type', 'application/json');
+	}
+-{{- end }}
+}
+`

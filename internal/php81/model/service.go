@@ -3,14 +3,18 @@ package model
 import (
 	"bytes"
 	"strings"
+
+	"github.com/emicklei/proto"
 )
 
 type Service struct {
+	RPCs []*proto.RPC
+
 	// Name (full path) for the generated file
-	name string
+	Name string
 
 	// Namespace to use in file
-	namespace string
+	Namespace string
 
 	// Comment from proto file
 	Comment string
@@ -27,8 +31,8 @@ type Service struct {
 
 func NewService(name, namespace string) *Service {
 	return &Service{
-		name:      name,
-		namespace: namespace,
+		Name:      name,
+		Namespace: namespace,
 		uses: []string{
 			"Psr\\Http\\Message\\ResponseInterface as Response",
 			"Psr\\Http\\Message\\ServerRequestInterface as Request",
@@ -37,7 +41,11 @@ func NewService(name, namespace string) *Service {
 }
 
 func (f *Service) Filename() string {
-	return f.name + ".php"
+	return f.Name + ".php"
+}
+
+func (f *Service) AddRPC(rpc *proto.RPC) {
+	f.RPCs = append(f.RPCs, rpc)
 }
 
 func (f *Service) AddFunction(def []string) {
@@ -47,7 +55,7 @@ func (f *Service) AddFunction(def []string) {
 func (f *Service) Bytes() []byte {
 	f.print("<?php")
 	f.print()
-	f.print("namespace " + f.namespace + ";")
+	f.print("namespace " + f.Namespace + ";")
 	f.print()
 	for _, use := range f.uses {
 		f.print("use " + use + ";")
@@ -55,7 +63,7 @@ func (f *Service) Bytes() []byte {
 	if len(f.uses) > 0 {
 		f.print()
 	}
-	className := f.name
+	className := f.Name
 	f.print("/** " + f.Comment + " */")
 	f.print("interface " + className)
 	f.print("{")

@@ -4,121 +4,89 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+	"text/template"
+
+	"github.com/apex/log"
+	"github.com/emicklei/proto"
 )
 
 type Router struct {
 	// Name (full path) for the generated file
-	name string
+	Name string
 
 	// Namespace to use in file
-	namespace string
-
-	// Used objects from other namespaces
-	uses []string
+	Namespace string
 
 	// Routes
-	routes []*Route
+	Routes []*Route
 
-	// Contents for final generated file
-	contents bytes.Buffer
+	// RPCs
+	RPCs []*proto.RPC
+
+	// Twirp specific options
+	Prefix, PackageName, ServiceName string
 }
 
-func NewRouter(name, namespace string, routes ...*Route) *Router {
+func NewRouter(name, namespace string) *Router {
 	return &Router{
-		name:      name,
-		namespace: namespace,
-		routes:    routes,
-		uses: []string{
-			"Psr\\Http\\Message\\ResponseInterface as Response",
-			"Psr\\Http\\Message\\ServerRequestInterface as Request",
-			"Slim\\Routing\\RouteCollectorProxy",
-		},
+		Name:      name,
+		Namespace: namespace,
+		Prefix:    "/twirp",
 	}
-}
-
-func (f *Router) AddRoute(n *Route) {
-	f.routes = append(f.routes, n)
 }
 
 func (f *Router) Filename() string {
-	return f.name + "Router.php"
+	return f.Name + "Router.php"
 }
 
 func (f *Router) Bytes() []byte {
-	f.print("<?php")
-	f.print()
-	f.print("namespace " + f.namespace + ";")
-	f.print()
-	for _, use := range f.uses {
-		f.print("use " + use + ";")
+	funcMap := template.FuncMap{
+		"twirpRoute": func(rpc *proto.RPC) string {
+			// /<prefix>/<package>.<service>/<call>
+			return fmt.Sprintf("%s/%s.%s/%s", f.Prefix, f.PackageName, f.ServiceName, rpc.Name)
+		},
 	}
-	if len(f.uses) > 0 {
-		f.print()
-	}
-	className := f.name + "Router"
-
-	// handlerClassName := f.name + "Handler"
-
-	f.print("class " + className)
-	f.print("{")
-	f.print("\tpublic function Mount(\\Slim\\App $app, string $serviceClass)")
-	f.print("\t{")
-
-	urls := make([]string, len(f.routes))
-	for k, v := range f.routes {
-		urls[k] = v.URL
+	tpl, err := template.New("render-php81-router").Funcs(funcMap).Parse(routerTemplate)
+	if err != nil {
+		log.WithError(err).Errorf("error loading template for %s", f.Filename())
+		return nil
 	}
 
-	var prefix string
-	if len(urls) > 0 {
-		prefix = urls[0]
-		for _, url := range urls {
-			for prefix != "" && !strings.HasPrefix(url, prefix) {
-				prefix = prefix[0 : len(prefix)-1]
-			}
-		}
-	}
-	prefix = strings.TrimSuffix(prefix, "/")
-
-	if prefix != "" {
-		f.print("\t\t$app->group(\"" + prefix + "\", function (RouteCollectorProxy $group) use ($serviceClass) {")
-		for _, v := range f.routes {
-			var (
-				methods = "[\"" + strings.ToUpper(v.Method) + "\"]"
-				url     = "\"" + strings.TrimPrefix(v.URL, prefix) + "\""
-				name    = "\"" + v.RPC.Name + "\""
-				handler = "$serviceClass . \":handle" + v.RPC.Name + "\""
-			)
-			f.print(fmt.Sprintf("\t\t\t$group->map(%s, %s, %s)->setName(%s);", methods, url, handler, name))
-		}
-		f.print("\t\t});")
-		f.print("\t}")
-		f.print("}")
-		return f.contents.Bytes()
+	out := new(bytes.Buffer)
+	err = tpl.Execute(out, f)
+	if err != nil {
+		log.WithError(err).Errorf("error rendering template for %s", f.Filename())
+		return nil
 	}
 
-	for _, v := range f.routes {
-		var (
-			methods = "[\"" + strings.ToUpper(v.Method) + "\"]"
-			url     = "\"" + strings.TrimPrefix(v.URL, prefix) + "\""
-			name    = "\"" + v.RPC.Name + "\""
-			handler = "$serviceClass . \":handle" + v.RPC.Name + "\""
-		)
-		f.print(fmt.Sprintf("\t\t$app->map(%s, %s, %s)->setName(%s);", methods, url, handler, name))
-	}
+	sOut := out.String()
+	sOut = strings.ReplaceAll(sOut, "\n\n\n", "\n\n")
+	sOut = strings.ReplaceAll(sOut, "-\n", "")
+	sOut = strings.ReplaceAll(sOut, "\n-", "")
+	sOut = strings.TrimSpace(sOut) + "\n"
 
-	f.print("\t}")
-	f.print("}")
-
-	return f.contents.Bytes()
+	return []byte(sOut)
 }
 
-func (f *Router) print(lines ...string) {
-	if len(lines) == 0 {
-		f.contents.WriteString("\n")
-		return
-	}
-	for _, line := range lines {
-		f.contents.WriteString(line + "\n")
+const routerTemplate = `
+<?php
+
+namespace {{ .Namespace }};
+
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Slim\Routing\RouteCollectorProxy;
+
+class {{ .Name }}Router
+{
+	public function Mount(\Slim\App $app, string $serviceClass)
+	{
+{{- range .RPCs }}
+		$app->post("{{ . | twirpRoute }}", $serviceClass . ":handle{{ .Name }}");
+-{{- end }}
+{{- range .Routes }}
+		$app->{{ .Method }}("{{ .URL }}", $serviceClass . ":handle{{ .RPC.Name }}");
+{{- end }}
 	}
 }
+`

@@ -16,22 +16,31 @@ type FileGenerator interface {
 }
 
 type generator struct {
-	name string
-
 	options *Options
 
 	hasRPC bool
 
 	files []FileGenerator
 
-	service *model.Service
-
 	routes []*model.Route
+
+	service     *model.Service
+	serviceName string
+
+	packageName string
 }
 
 func (g *generator) Files() []FileGenerator {
-	router := model.NewRouter(g.name, g.options.Namespace, g.routes...)
-	handler := model.NewHandler(g.name, g.options.Namespace, g.routes...)
+	router := model.NewRouter(g.serviceName, g.options.Namespace)
+	if router.Prefix = strings.TrimRight(g.options.Prefix, "/"); router.Prefix == "" {
+		router.Prefix = "/twirp"
+	}
+	router.ServiceName = g.serviceName
+	router.PackageName = g.packageName
+	router.RPCs = g.service.RPCs
+	router.Routes = g.routes
+
+	handler := model.NewHandler(g.serviceName, g.options.Namespace, g.service.RPCs)
 
 	return append([]FileGenerator{g.service, router, handler}, g.files...)
 }
@@ -45,6 +54,7 @@ func NewGenerator(options *Options) *generator {
 
 func (g *generator) Handlers() []proto.Handler {
 	return []proto.Handler{
+		proto.WithPackage(g.Package),
 		proto.WithService(g.Service),
 		proto.WithOption(g.Option),
 		proto.WithRPC(g.RPC),
@@ -53,10 +63,17 @@ func (g *generator) Handlers() []proto.Handler {
 	}
 }
 
+func (g *generator) Package(pkg *proto.Package) {
+	g.packageName = pkg.Name
+}
+
 func (g *generator) Service(service *proto.Service) {
-	g.name = service.Name
-	filename := path.Join(g.options.Folder, service.Name)
-	g.service = model.NewService(filename, g.options.Namespace)
+	g.serviceName = service.Name
+
+	svc := model.NewService(service.Name, g.options.Namespace)
+	svc.Namespace = g.options.Namespace
+	svc.Name = path.Join(g.options.Folder, service.Name)
+	g.service = svc
 }
 
 func (g *generator) Import(i *proto.Import) {
@@ -87,6 +104,7 @@ func (g *generator) RPC(rpc *proto.RPC) {
 
 	svc := g.service
 	svc.Comment = comment(service.Comment)
+	svc.AddRPC(rpc)
 	svc.AddFunction([]string{
 		"/** " + comment(rpc.Comment) + " */",
 		"public function " + rpc.Name + "(" + rpc.RequestType + " $req): " + rpc.ReturnsType + ";",
