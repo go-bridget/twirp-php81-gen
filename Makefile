@@ -9,6 +9,9 @@ all:
 build:
 	go build -o build/ ./cmd/...
 
+codegen:
+	@drone exec --trusted --include=codegen
+
 clean:
 	go fmt ./...
 	go mod tidy

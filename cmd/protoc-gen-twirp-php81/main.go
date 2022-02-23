@@ -23,6 +23,7 @@ func main() {
 
 		namespace = flags.String("namespace", "Twirp", "PHP namespace for generated messages")
 		folder    = flags.String("folder", "", "Output folder for generated .php files")
+		prefix    = flags.String("prefix", "/twirp", "Prefix for RPC apis (default: /twirp)")
 		router    = flags.Bool("router", false, "Output generated gRPC transcoding router")
 	)
 	opts := protogen.Options{
@@ -33,6 +34,7 @@ func main() {
 			Namespace: *namespace,
 			Folder:    *folder,
 			Router:    *router,
+			Prefix:    *prefix,
 		}
 
 		for _, f := range gen.Files {
